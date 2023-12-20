@@ -1,6 +1,6 @@
 import random, time
 
-# COMMANDLINE BLACKJACK
+# COMMAND LINE BLACKJACK
 # WRITTEN BY BRANDON CROTTY
 # 2023-12-20
 
@@ -18,6 +18,8 @@ DECK_TEMPLATE = {"A ♠": 1, "2 ♠": 2, "3 ♠": 3, "4 ♠": 4, "5 ♠": 5, "6 
                  "8 ♦": 8, "9 ♦": 9, "10♦": 10, "J ♦": 10, "Q ♦": 10, "K ♦": 10,
                  "A ♥": 1, "2 ♥": 2, "3 ♥": 3, "4 ♥": 4, "5 ♥": 5, "6 ♥": 6, "7 ♥": 7, # HEARTS
                  "8 ♥": 8, "9 ♥": 9, "10♥": 10, "J ♥": 10, "Q ♥": 10, "K ♥": 10}
+
+WAIT_TIME = 0.5 # Delay added to the menu
 
 chips = 100 # Starting chips
 bet = 0 # Bet amount
@@ -37,7 +39,7 @@ def countCards(hand):
 
 # Draw card - returns a random card from the temp deck as a tuple and removes it
 def draw_card():
-    time.sleep(0.5) # Add a slight delay for effect
+    time.sleep(WAIT_TIME) # Add a slight delay for effect
     card = random.choice(list(deck.items())) # Get random card
     del deck[card[0]] # Remove that card from the deck
     return card
@@ -69,6 +71,7 @@ def player(dealerFirstCard):
 
     # Print first dealer card
     print("The dealer's first card is: ")
+    time.sleep(WAIT_TIME)
     print(dealerFirstCard[0])
 
     # Starting cards
@@ -76,6 +79,7 @@ def player(dealerFirstCard):
     player_hand.append(draw_card())
     player_hand.append(draw_card())
     print_hand(player_hand)
+    time.sleep(WAIT_TIME)
 
     # Check for blackjack (doesn't do anything atm as soft 11 aces aren't integrated yet)
     # Show dealer's first card
@@ -163,9 +167,9 @@ def new_game():
         print(f"You won {bet} chips!")
         chips += bet * 2
 
-print("#####################")
+print("♠♣♦♥♠♣♦♥♠♣♦♥♠♣♦♥♠♣♦♥♠")
 print("Welcome to the casino")
-print("#####################")
+print("♠♣♦♥♠♣♦♥♠♣♦♥♠♣♦♥♠♣♦♥♠")
 
 # Main game loop
 while True:
