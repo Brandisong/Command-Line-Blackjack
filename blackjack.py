@@ -5,7 +5,6 @@ import random, time
 # 2023-12-20
 
 # TODO:
-# Add soft 11 aces
 # Add splitting
 # Add insurance
 
@@ -20,7 +19,7 @@ DECK_TEMPLATE = {"A ♠": 1, "2 ♠": 2, "3 ♠": 3, "4 ♠": 4, "5 ♠": 5, "6 
                  "8 ♥": 8, "9 ♥": 9, "10♥": 10, "J ♥": 10, "Q ♥": 10, "K ♥": 10}
 
 WAIT_TIME = 0.5 # Delay added to the menu
-
+BJ_PAYOUT = 1.5
 chips = 100 # Starting chips
 bet = 0 # Bet amount
 
@@ -28,7 +27,10 @@ bet = 0 # Bet amount
 def print_hand(hand):
     for x in range(len(hand)):
         print(hand[x][0], end=' ')
-    print("\nTOTAL: " + str(countCards(hand)))
+    if hasSoftAce(hand): # Soft ace, print score and soft score
+        print(f"\nTOTAL: {countCards(hand)} ({countCards(hand) + 10})")
+    else: # No soft ace, print score
+        print("\nTOTAL: " + str(countCards(hand)))
     time.sleep(WAIT_TIME)
 
 # Count cards - returns the total value of cards in the hand
@@ -38,6 +40,21 @@ def countCards(hand):
         score += hand[x][1]
     return score
 
+# Checks if the hand has an ace, returns False if not, and True if it does
+def hasSoftAce(hand):
+    score = 0
+    hasAce = False
+    for x in range(len(hand)):
+        score += hand[x][1]
+        if hand[x][0][0] == 'A': # Ace present
+            hasAce = True
+    if (score < 12) & hasAce: # Soft ace present
+        return True
+    else:
+        return False
+    
+    return False # No ace found
+
 # Draw card - returns a random card from the temp deck as a tuple and removes it
 def draw_card():
     time.sleep(WAIT_TIME) # Add a slight delay for effect
@@ -45,7 +62,7 @@ def draw_card():
     del deck[card[0]] # Remove that card from the deck
     return card
 
-# Player's turn - returns their hand value or 0 if bust
+# Player's turn - returns their hand value or 0 if bust, and 'BJ' if blackjack
 def player(dealerFirstCard):
     player_hand = [] # List of card tuples
     global chips
@@ -82,7 +99,11 @@ def player(dealerFirstCard):
     print_hand(player_hand)
     time.sleep(WAIT_TIME)
 
-    # Check for blackjack (doesn't do anything atm as soft 11 aces aren't integrated yet)
+    # Check for blackjack
+    if hasSoftAce(player_hand) & (countCards(player_hand) == 11):
+        print("Blackjack!")
+        return "BJ"
+
     # Show dealer's first card
 
     # Check for a split
@@ -106,14 +127,17 @@ def player(dealerFirstCard):
             print(", (d)ouble down", end='')
         print()
         
-        selection = input()
+        selection = input("> ")
         if selection == 'h': # Hit
             player_hand.append(draw_card())
             print_hand(player_hand)
             firstTurn = False
 
         elif selection == 's': # Stand
-            return (countCards(player_hand))
+            if hasSoftAce(player_hand): # Return soft ace total
+                return (countCards(player_hand) + 10)
+            else: # No soft ace, return normal score
+                return (countCards(player_hand))
         
         elif (selection == 'p') & isSplit & firstTurn: # Split
             print("Sorry! This feature hasn't been implemented yet")
@@ -127,7 +151,10 @@ def player(dealerFirstCard):
                 print("Bust!")
                 return 0
             else: # Not bust, return hand
-                return (countCards(player_hand))
+                if hasSoftAce(player_hand): # Return soft ace total
+                    return (countCards(player_hand) + 10)
+                else: # No soft ace, return normal score
+                    return (countCards(player_hand))
         
         else: # Unavailable / invalid option
             print("Invalid input, please try again")
@@ -143,6 +170,10 @@ def dealer(dealerFirstCard):
         dealer_hand.append(draw_card())
         print_hand(dealer_hand)
         dealer_score = countCards(dealer_hand)
+        if hasSoftAce(dealer_hand): # Modify score if soft ace to stand on soft 17
+            dealer_score += 10
+            if (len(dealer_hand) == 2) & (dealer_score == 21): # Dealer has a blackjack
+                return "BJ"
 
         if dealer_score > 21: # Bust
             print("Dealer's gone bust!")
@@ -158,12 +189,25 @@ def new_game():
     deck = DECK_TEMPLATE.copy()
     dealerFirstCard = draw_card() # First card for the dealer
 
+    print("-------------------------------------------------")
     player_score =  player(dealerFirstCard)
     if player_score == 0: # Player went bust
         return
-    
-    dealer_score = dealer(dealerFirstCard)
-    if dealer_score > player_score: # Lost to dealer
+    elif player_score == 'BJ':
+        dealer_score = dealer(dealerFirstCard) # Check if dealer has a blackjack too
+        if dealer_score == 'BJ':
+            print("A blackjack push! Your bet has been returned") # Blackjack push
+            chips += bet
+            return
+        else: # Player wins with blackjack
+            print(f"You won {int(bet * BJ_PAYOUT)} chips!")
+            chips += bet + int(bet * BJ_PAYOUT)
+            return
+
+    dealer_score = dealer(dealerFirstCard) # Start dealer
+    if dealer_score == "BJ": # Dealer has blackjack
+        print("Damn! The dealer has a blackjack. Bad luck.")
+    elif dealer_score > player_score: # Lost to dealer
         print("Sorry, the dealer won :(")
     elif dealer_score == player_score: # Push
         print("Push! Your bet has been returned")
@@ -187,7 +231,7 @@ while True:
         print("Enter 'n' to start a new game")
         print("Enter '0' to exit")
 
-        selection = input()
+        selection = input("> ")
         if selection == "0":
             break
         elif selection == "n":
