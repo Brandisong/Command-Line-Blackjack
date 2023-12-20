@@ -29,6 +29,7 @@ def print_hand(hand):
     for x in range(len(hand)):
         print(hand[x][0], end=' ')
     print("\nTOTAL: " + str(countCards(hand)))
+    time.sleep(WAIT_TIME)
 
 # Count cards - returns the total value of cards in the hand
 def countCards(hand):
@@ -120,9 +121,13 @@ def player(dealerFirstCard):
         elif (selection == 'd') & isDouble & firstTurn: # Double
             chips -= bet
             bet = bet * 2
-            player_hand.append(draw_card())
+            player_hand.append(draw_card()) # Deal single card
             print_hand(player_hand)
-            firstTurn = False
+            if countCards(player_hand) > 21: # Check if bust
+                print("Bust!")
+                return 0
+            else: # Not bust, return hand
+                return (countCards(player_hand))
         
         else: # Unavailable / invalid option
             print("Invalid input, please try again")
